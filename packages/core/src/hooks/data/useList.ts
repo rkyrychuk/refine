@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import React, { useContext } from "react";
 import { QueryObserverResult, useQuery, UseQueryOptions } from "react-query";
 import { ArgsProps } from "antd/lib/notification";
 
@@ -15,6 +15,7 @@ import {
 } from "../../interfaces";
 import { useCheckError, useTranslate } from "@hooks";
 import { handleNotification } from "@definitions";
+import { createClient } from "@supabase/supabase-js";
 
 interface UseListConfig {
     pagination?: Pagination;
@@ -59,6 +60,26 @@ export const useList = <
     const { getList } = useContext<IDataContext>(DataContext);
     const translate = useTranslate();
     const { mutate: checkError } = useCheckError();
+
+    const SUPABASE_URL = "https://iwdfzvfqbtokqetmbmbp.supabase.co";
+    const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYzMDU2NzAxMCwiZXhwIjoxOTQ2MTQzMDEwfQ._gr6kXGkQBi9BM9dx5vKaNKYj_DJN1xlkarprGpM_fU";
+
+    React.useEffect(() => {
+        console.log("here");
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const subscription = supabase
+            .from("*")
+            .on("*", (payload) => {
+                console.log("Change received!", payload);
+            })
+            .subscribe();
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
 
     const queryResponse = useQuery<GetListResponse<TData>, TError>(
         [`resource/list/${resource}`, { ...config }],
