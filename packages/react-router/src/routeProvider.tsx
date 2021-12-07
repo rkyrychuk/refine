@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React from "react";
-import { RouteProps, Switch, Route, Redirect } from "react-router-dom";
+import { RouteProps, Routes, Route, Navigate } from "react-router-dom";
 import {
     LoginPage as DefaultLoginPage,
     ErrorComponent,
@@ -30,9 +30,9 @@ const RouteProviderBase: React.FC = () => {
 
     if (isLoading) {
         return (
-            <Switch>
+            <Routes>
                 <Route />
-            </Switch>
+            </Routes>
         );
     }
 
@@ -51,9 +51,8 @@ const RouteProviderBase: React.FC = () => {
 
         if (CreateComponent) {
             routes.push({
-                exact: true,
                 path: `/:resource(${route})/:action(create)`,
-                component: () => (
+                element: (
                     <CanAccess
                         resource={name}
                         action="create"
@@ -71,9 +70,8 @@ const RouteProviderBase: React.FC = () => {
             });
 
             routes.push({
-                exact: true,
                 path: `/:resource(${route})/:action(clone)/:id`,
-                component: (props: IRouteComponentProps) => (
+                children: (props: IRouteComponentProps) => (
                     <CanAccess
                         resource={name}
                         action="create"
@@ -94,9 +92,8 @@ const RouteProviderBase: React.FC = () => {
 
         if (EditComponent) {
             routes.push({
-                exact: true,
                 path: `/:resource(${route})/:action(edit)/:id`,
-                component: (props: IRouteComponentProps) => (
+                children: (props: IRouteComponentProps) => (
                     <CanAccess
                         resource={name}
                         action="edit"
@@ -117,9 +114,8 @@ const RouteProviderBase: React.FC = () => {
 
         if (ShowComponent) {
             routes.push({
-                exact: true,
                 path: `/:resource(${route})/:action(show)/:id`,
-                component: (props: IRouteComponentProps) => (
+                children: (props: IRouteComponentProps) => (
                     <CanAccess
                         resource={name}
                         action="show"
@@ -140,9 +136,8 @@ const RouteProviderBase: React.FC = () => {
 
         if (ListComponent) {
             routes.push({
-                exact: true,
-                path: `/:resource(${route})`,
-                component: () => (
+                path: `/:resource`,
+                children: () => (
                     <CanAccess
                         resource={name}
                         action="list"
@@ -174,70 +169,67 @@ const RouteProviderBase: React.FC = () => {
     );
 
     const renderAuthorized = () => (
-        <Switch>
+        <Routes>
             {[...(customRoutes || [])].map((route, i) => (
                 <Route key={`custom-route-${i}`} {...route} />
             ))}
-            <Route>
-                <Switch>
-                    <Route
-                        path="/"
-                        exact
-                        component={() =>
-                            DashboardPage ? (
-                                <LayoutWrapper>
-                                    <CanAccess
-                                        resource="dashboard"
-                                        action="list"
-                                        fallback={
-                                            catchAll ?? <ErrorComponent />
-                                        }
-                                    >
-                                        <DashboardPage />
-                                    </CanAccess>
-                                </LayoutWrapper>
-                            ) : (
-                                <Redirect to={`/${resources[0].route}`} />
-                            )
-                        }
-                    />
-                    {[...routes].map((route, i) => (
-                        <RouteWithSubRoutes key={i} {...route} />
-                    ))}
-                    <Route path="/:resource?/:action?">
-                        {catchAll ?? (
-                            <LayoutWrapper>
-                                <ErrorComponent />
-                            </LayoutWrapper>
-                        )}
-                    </Route>
-                    <Route>
-                        {catchAll ?? (
-                            <LayoutWrapper>
-                                <ErrorComponent />
-                            </LayoutWrapper>
-                        )}
-                    </Route>
-                </Switch>
+            {/* <Route
+                path="/"
+                element={
+                    DashboardPage ? (
+                        <LayoutWrapper>
+                            <CanAccess
+                                resource="dashboard"
+                                action="list"
+                                fallback={catchAll ?? <ErrorComponent />}
+                            >
+                                <DashboardPage />
+                            </CanAccess>
+                        </LayoutWrapper>
+                    ) : (
+                        <Navigate to={`/${resources[0].route}`} replace />
+                    )
+                }
+            /> */}
+            {[...routes].map((route, i) => (
+                <Route key={i} {...route} />
+            ))}
+            {/*  <Route path="/:resource?/:action?">
+                {catchAll ?? (
+                    <LayoutWrapper>
+                        <ErrorComponent />
+                    </LayoutWrapper>
+                )}
             </Route>
-        </Switch>
+            <Route>
+                {catchAll ?? (
+                    <LayoutWrapper>
+                        <ErrorComponent />
+                    </LayoutWrapper>
+                )}
+            </Route> */}
+        </Routes>
     );
 
     const renderUnauthorized = () => (
-        <Switch>
+        <Routes>
             <Route
-                exact
-                path={["/", "/login"]}
-                component={() =>
-                    LoginPage ? <LoginPage /> : <DefaultLoginPage />
-                }
+                path="/"
+                element={LoginPage ? <LoginPage /> : <DefaultLoginPage />}
+            />
+            <Route
+                path="/login"
+                element={LoginPage ? <LoginPage /> : <DefaultLoginPage />}
             />
             {[...(customRoutes || [])].map((route, i) => (
                 <Route key={`custom-route-${i}`} {...route} />
             ))}
 
             <Route
-                render={({ location }: { location: any }) => {
+                path="*"
+                // eslint-disable-next-line react/no-children-prop
+                children={({ location }: { location: any }) => {
+                    console.log("hedeee");
                     if (isLoading) {
                         return null;
                     }
@@ -246,13 +238,14 @@ const RouteProviderBase: React.FC = () => {
                     const toURL = `${pathname}${search}`;
 
                     return (
-                        <Redirect
+                        <Navigate
                             to={`/login?to=${encodeURIComponent(toURL)}`}
+                            replace
                         />
                     );
                 }}
-            />
-        </Switch>
+            ></Route>
+        </Routes>
     );
     return isAuthenticated ? renderAuthorized() : renderUnauthorized();
 };

@@ -21,7 +21,9 @@ export const RouterComponent: React.FC<BrowserRouterProps> = ({
         callback(allowTransition);
     };
     return (
-        <BrowserRouter getUserConfirmation={getUserConfirmation} {...props}>
+        <BrowserRouter
+            /*  getUserConfirmation={getUserConfirmation} */ {...props}
+        >
             <RouteProvider />
             {children}
         </BrowserRouter>

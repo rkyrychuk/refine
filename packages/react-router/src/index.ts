@@ -1,10 +1,10 @@
 import React from "react";
 import { IRouterProvider } from "@pankod/refine";
 import {
-    useHistory,
+    useNavigate,
     useLocation,
     useParams,
-    Prompt,
+    /* Prompt, */
     Link,
     RouteProps,
     BrowserRouterProps,
@@ -13,19 +13,33 @@ import {
 import { RouterComponent } from "./routerComponent";
 
 interface IReactRouterProvider extends IRouterProvider {
-    useHistory: typeof useHistory;
     useLocation: typeof useLocation;
     Link: typeof Link;
-    useParams: typeof useParams;
+    useParams: any; // fix
     routes?: RouteProps[];
     RouterComponent: React.FC<BrowserRouterProps>;
 }
 
 const RouterProvider: IReactRouterProvider = {
-    useHistory,
+    useHistory: () => {
+        const navigate = useNavigate();
+        const location = useLocation();
+
+        return {
+            push: (path: string) => {
+                navigate(path);
+            },
+            replace: (path: string) => {
+                navigate(path, { replace: true });
+            },
+            goBack: () => {
+                return true;
+            },
+        };
+    },
     useLocation,
     useParams,
-    Prompt: Prompt as any,
+    Prompt: null as any,
     Link,
     RouterComponent,
 };
